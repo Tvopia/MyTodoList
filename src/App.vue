@@ -12,7 +12,7 @@
           />
         </p>
         <p class="control">
-          <button :disabled="!newtodoContent" class="button is-info is-warning">
+          <button :disabled="!newtodoContent" class="button is-info">
             Add
           </button>
         </p>
@@ -23,7 +23,7 @@
       v-for="todo in todos"
       :key="todo.id"
       class="card mb-5"
-      :class="{ 'has-background-success-light': todo.done }"
+      :class="{ 'has-background-warning-light': todo.done }"
     >
       <div class="card-content">
         <div class="content">
@@ -37,7 +37,7 @@
             <div class="column is-5 has-text-right">
               <button
                 @click="toggleDone(todo.id)"
-                class="button is-success"
+                class="button is-light"
                 :class="todo.done ? 'is-success' : 'is-light'"
               >
                 &check;
@@ -59,13 +59,25 @@
 <script setup>
 // import
 
-import { ref } from "vue";
-import { v4 as uuidv4 } from "uuid";
+import { ref, onMounted } from "vue";
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  doc,
+  deleteDoc,
+  updateDoc, 
+} from "firebase/firestore";
+import { db } from "@/firebase";
+
+//firebase ref
+
+const todosCollectionRef = collection(db, "todos");
 
 // todos
 
 const todos = ref([
- /*  {
+  /*  {
     id: "id1",
     content: "Кошка",
     done: false,
@@ -77,31 +89,48 @@ const todos = ref([
   }, */
 ]);
 
+//get todos
+onMounted(() => {
+  onSnapshot(todosCollectionRef, (querySnapshot) => {
+    const fbTodos = [];
+    querySnapshot.forEach((doc) => {
+      const todo = {
+        id: doc.id,
+        content: doc.data().content,
+        done: doc.data().done,
+      };
+      fbTodos.push(todo);
+    });
+    todos.value = fbTodos;
+  });
+});
+
 // add todo
 
 const newtodoContent = ref("");
 
 const addTodo = () => {
-  const newTodo = {
-    id: uuidv4(),
+  addDoc(todosCollectionRef, {
     content: newtodoContent.value,
     done: false,
-  };
-  todos.value.unshift(newTodo);
+  });
   newtodoContent.value = "";
 };
 
 // delete todo
 
 const deleteTodo = (id) => {
-  todos.value = todos.value.filter((todo) => todo.id !== id);
+deleteDoc(doc(todosCollectionRef, id));
 };
 
 //toggle Done
 
 const toggleDone = (id) => {
   const index = todos.value.findIndex((todo) => todo.id === id);
-  todos.value[index].done = !todos.value[index].done;
+
+updateDoc( doc(todosCollectionRef, id), {
+done: !todos.value[index].done,
+});
 };
 </script>
 
