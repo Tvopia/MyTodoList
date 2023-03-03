@@ -12,7 +12,7 @@
           />
         </p>
         <p class="control">
-          <button :disabled="!newtodoContent" class="button is-info">
+          <button :disabled="!newtodoContent" class="button is-info is-warning">
             Add
           </button>
         </p>
@@ -66,13 +66,21 @@ import {
   addDoc,
   doc,
   deleteDoc,
-  updateDoc, 
+  updateDoc,
+  query,
+  orderBy,
+  limit,
 } from "firebase/firestore";
 import { db } from "@/firebase";
 
 //firebase ref
 
 const todosCollectionRef = collection(db, "todos");
+const todosCollectionQuery = query(
+  todosCollectionRef,
+  orderBy("data", "desc"),
+  limit(2)
+);
 
 // todos
 
@@ -113,6 +121,7 @@ const addTodo = () => {
   addDoc(todosCollectionRef, {
     content: newtodoContent.value,
     done: false,
+    date: Date.now(),
   });
   newtodoContent.value = "";
 };
@@ -120,7 +129,7 @@ const addTodo = () => {
 // delete todo
 
 const deleteTodo = (id) => {
-deleteDoc(doc(todosCollectionRef, id));
+  deleteDoc(doc(todosCollectionRef, id));
 };
 
 //toggle Done
@@ -128,9 +137,9 @@ deleteDoc(doc(todosCollectionRef, id));
 const toggleDone = (id) => {
   const index = todos.value.findIndex((todo) => todo.id === id);
 
-updateDoc( doc(todosCollectionRef, id), {
-done: !todos.value[index].done,
-});
+  updateDoc(doc(todosCollectionRef, id), {
+    done: !todos.value[index].done,
+  });
 };
 </script>
 
